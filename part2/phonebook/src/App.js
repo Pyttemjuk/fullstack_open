@@ -9,12 +9,18 @@ const App = () => {
   const [newName, setNewName] = useState("");
   const [newNumber, setNewNumber] = useState("");
   const [showName, setShowName] = useState("");
-  const [addMessage, setAddMessage] = useState(null);
-  const [errorMessage, setErrorMessage] = useState(null);
+  const [notification, setNotification] = useState(null);
+  const [type, setType] = useState(null);
 
   useEffect(() => {
     personService.getAll().then((initialPersons) => setPersons(initialPersons));
   }, []);
+
+  const notify = (message, type) => {
+    setNotification(message);
+    setType(type);
+    setTimeout(() => setNotification(null), 5000);
+  };
 
   const Notification = ({ message, className }) => {
     if (message === null) {
@@ -27,50 +33,53 @@ const App = () => {
   const addButton = (event) => {
     event.preventDefault();
 
-    const found = persons.find((person) => person.name === newName);
-    const message = `${newName} is already added to phonebook, replace old number with a new one?`;
-
-    if (!found) {
-      addPerson();
-    } else if (window.confirm(message)) {
-      updatePerson(found);
-    }
-
-    setTimeout(() => {
-      setAddMessage(null);
-      setErrorMessage(null);
-    }, 5000);
     setNewName("");
     setNewNumber("");
-  };
 
-  const addPerson = () => {
-    const personObject = {
+    const person = {
       name: newName,
       number: newNumber,
     };
-    personService
-      .create(personObject)
-      .then((returnedPerson) => setPersons(persons.concat(returnedPerson)));
-    setAddMessage(`Added ${personObject.name}`);
-  };
 
-  const updatePerson = (person) => {
-    const changedPerson = { ...person, number: newNumber };
-    personService
-      .update(person.id, changedPerson)
-      .then((changedPerson) => {
-        setPersons(
-          persons.map((p) => (p.id !== person.id ? p : changedPerson))
-        );
-        setAddMessage(`Changed number for ${changedPerson.name}`);
-      })
-      .catch((error) => {
-        setErrorMessage(
-          `Information about ${person.name} has already been removed from server`
-        );
-        setPersons(persons.filter((p) => p.id !== person.id));
-      });
+    const foundPerson = persons.find((p) => p.name === newName);
+    if (foundPerson) {
+      const ok = window.confirm(
+        `${foundPerson.name} is already added to phonebook, replace old number with a new one?`
+      );
+
+      if (ok) {
+        personService
+          .update(foundPerson.id, { ...foundPerson, number: newNumber })
+          .then((updatedPerson) => {
+            setPersons(
+              persons.map((p) => (p.id !== foundPerson.id ? p : updatedPerson))
+            );
+            notify(`Changed number for ${updatedPerson.name}`, "info");
+            setNewName("");
+            setNewNumber("");
+          })
+          .catch((error) => {
+            if (error.name === "TypeError") {
+              notify(
+                `${foundPerson.name} has already been removed from server`,
+                "error"
+              );
+              setPersons(persons.filter((p) => p.id !== foundPerson.id));
+            } else {
+              notify(error.response.data.error, "error");
+            }
+          });
+      }
+    } else {
+      personService
+        .create(person)
+        .then((createdPerson) => setPersons(persons.concat(createdPerson)))
+        .catch((error) => {
+          notify(error.response.data.error, "error");
+        });
+
+      notify(`Added ${person.name}`, "info");
+    }
   };
 
   const removePersonWith = (id) => {
@@ -78,6 +87,7 @@ const App = () => {
     if (window.confirm(`Delete ${person.name}?`)) {
       personService.remove(id);
       setPersons(persons.filter((p) => p.id !== id));
+      notify(`Deleted ${person.name}`, "info");
     }
   };
 
@@ -100,8 +110,7 @@ const App = () => {
   return (
     <div>
       <h2>Phonebook</h2>
-      <Notification message={addMessage} className="add"></Notification>
-      <Notification message={errorMessage} className="error"></Notification>
+      <Notification message={notification} className={type}></Notification>
       <Filter showName={showName} handleNameFilter={handleNameFilter}></Filter>
       <h2>Add new person</h2>
       <PersonForm
