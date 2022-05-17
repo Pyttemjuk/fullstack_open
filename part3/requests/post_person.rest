@@ -1,0 +1,71 @@
+POST http://localhost:3001/api/persons
+Content-Type: application/json
+
+{
+  "name": "Elly",
+  "number": "011-444444"
+}
+
+###
+POST http://localhost:3001/api/persons
+Content-Type: application/json
+
+{
+  "name": "",
+  "number": "011-444444"
+}
+
+###
+POST http://localhost:3001/api/persons
+Content-Type: application/json
+
+{
+  "name": "Elly",
+  "number": ""
+}
+
+###
+POST http://localhost:3001/api/persons
+Content-Type: application/json
+
+{
+  "name": "Elly",
+  "number": "1234556"
+}
+
+###
+POST http://localhost:3001/api/persons
+Content-Type: application/json
+
+{
+  "name": "Elly",
+  "number": "1234556789"
+}
+
+###
+POST http://localhost:3001/api/persons
+Content-Type: application/json
+
+{
+  "name": "Elly",
+  "number": "1-22334455"
+}
+
+###
+POST http://localhost:3001/api/persons
+Content-Type: application/json
+
+{
+  "name": "Elly",
+  "number": "10-22-334455"
+}
+
+###
+POST http://localhost:3001/api/persons
+Content-Type: application/json
+
+{
+  "name": "Elly",
+  "number": "1022-334455"
+}
+
